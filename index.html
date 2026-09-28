@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support Agent — Memory Demo</title>
+<style>
+  :root{
+    --bg:#FAF9F6;
+    --panel:#FFFFFF;
+    --border:#E7E5E0;
+    --text:#23262B;
+    --muted:#6B7280;
+    --accent:#3D4FC4;
+    --accent-soft:#EEF0FC;
+    --memory:#1F8A70;
+    --memory-soft:#EAF6F2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    height:100vh;
+    display:flex;
+  }
+  /* Sidebar */
+  aside{
+    width:230px;
+    flex-shrink:0;
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    padding:24px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  aside h1{
+    font-size:16px;
+    margin:0 0 4px 0;
+    letter-spacing:-0.01em;
+  }
+  aside p.tag{
+    margin:0;
+    font-size:12px;
+    color:var(--muted);
+  }
+  label{
+    font-size:12px;
+    color:var(--muted);
+    display:block;
+    margin-bottom:6px;
+  }
+  select, button{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    font-size:13px;
+    background:var(--panel);
+    color:var(--text);
+  }
+  button.primary{
+    background:var(--accent);
+    color:white;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button.primary:hover{ opacity:0.92; }
+  button.secondary{
+    cursor:pointer;
+    color:var(--accent);
+    border-color:var(--accent);
+  }
+  #seedStatus{
+    font-size:12px;
+    color:var(--memory);
+    min-height:16px;
+  }
+
+  /* Main chat area */
+  main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+  }
+  header{
+    padding:18px 28px;
+    border-bottom:1px solid var(--border);
+  }
+  header h2{
+    margin:0;
+    font-size:15px;
+  }
+  header span{
+    font-size:12px;
+    color:var(--muted);
+  }
+  #messages{
+    flex:1;
+    overflow-y:auto;
+    padding:24px 28px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .msg{
+    max-width:70%;
+    padding:10px 14px;
+    border-radius:12px;
+    font-size:14px;
+    line-height:1.5;
+  }
+  .msg.user{
+    align-self:flex-end;
+    background:var(--accent-soft);
+    color:var(--text);
+  }
+  .msg.agent{
+    align-self:flex-start;
+    background:var(--panel);
+    border:1px solid var(--border);
+  }
+  .memory-strip{
+    align-self:flex-start;
+    max-width:70%;
+    border-left:3px solid var(--memory);
+    background:var(--memory-soft);
+    padding:8px 12px;
+    border-radius:6px;
+    font-size:12px;
+    color:#1F5F4F;
+  }
+  .memory-strip strong{
+    display:block;
+    font-size:11px;
+    text-transform:none;
+    color:var(--memory);
+    margin-bottom:3px;
+  }
+  form#composer{
+    display:flex;
+    gap:10px;
+    padding:16px 28px 22px 28px;
+    border-top:1px solid var(--border);
+  }
+  #input{
+    flex:1;
+    padding:11px 14px;
+    border-radius:9px;
+    border:1px solid var(--border);
+    font-size:14px;
+  }
+  #sendBtn{
+    width:auto;
+    padding:11px 20px;
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div>
+    <h1>Support Memory Demo</h1>
+    <p class="tag">Powered by Hindsight</p>
+  </div>
+
+  <div>
+    <label for="customer">Customer</label>
+    <select id="customer">
+      <option value="alice">Alice Menon</option>
+      <option value="raj">Raj Kapoor</option>
+    </select>
+  </div>
+
+  <button class="primary" id="seedBtn">Seed demo history</button>
+  <div id="seedStatus"></div>
+
+  <button class="secondary" id="clearBtn">Clear chat window</button>
+
+  <p class="tag">1. Pick a customer.<br>2. Click "Seed demo history" once.<br>3. Ask about a related issue and watch it recall the past.</p>
+</aside>
+
+<main>
+  <header>
+    <h2 id="chatTitle">Chatting as: Alice Menon</h2>
+    <span>Each reply shows what the agent recalled from memory.</span>
+  </header>
+
+  <div id="messages"></div>
+
+  <form id="composer">
+    <input id="input" placeholder="Type a message, e.g. 'I can't log in again'" autocomplete="off">
+    <button class="primary" id="sendBtn" type="submit">Send</button>
+  </form>
+</main>
+
+<script>
+const customerNames = { alice: "Alice Menon", raj: "Raj Kapoor" };
+
+const demoTickets = {
+  alice: [
+    "Customer Alice Menon reported a login issue on Sept 10 — resolved by resetting her password.",
+    "Alice Menon prefers to be contacted by email rather than phone.",
+    "Alice Menon's account is on the Pro plan, renewed Aug 2026."
+  ],
+  raj: [
+    "Customer Raj Kapoor reported a billing discrepancy on Sept 5 — a duplicate charge that was refunded.",
+    "Raj Kapoor uses the mobile app primarily, rarely the desktop site.",
+    "Raj Kapoor's account is on the Basic plan."
+  ]
+};
+
+const messagesEl = document.getElementById("messages");
+const customerSel = document.getElementById("customer");
+const chatTitle = document.getElementById("chatTitle");
+const seedStatus = document.getElementById("seedStatus");
+
+customerSel.addEventListener("change", () => {
+  chatTitle.textContent = "Chatting as: " + customerNames[customerSel.value];
+  messagesEl.innerHTML = "";
+  seedStatus.textContent = "";
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  messagesEl.innerHTML = "";
+});
+
+function addMessage(text, who){
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addMemoryStrip(lines){
+  const div = document.createElement("div");
+  div.className = "memory-strip";
+  const label = document.createElement("strong");
+  label.textContent = lines.length ? "🧠 Recalled from memory" : "🧠 No memory found (first interaction)";
+  div.appendChild(label);
+  if (lines.length){
+    div.appendChild(document.createTextNode(lines.join(" · ")));
+  }
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+document.getElementById("seedBtn").addEventListener("click", async () => {
+  const customer_id = customerSel.value;
+  seedStatus.textContent = "Seeding...";
+  try{
+    const res = await fetch("/seed", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ customer_id, tickets: demoTickets[customer_id] })
+    });
+    const data = await res.json();
+    seedStatus.textContent = "Seeded " + data.count + " past records ✓";
+  } catch(err){
+    seedStatus.textContent = "Error — is app.py running?";
+  }
+});
+
+document.getElementById("composer").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const input = document.getElementById("input");
+  const message = input.value.trim();
+  if (!message) return;
+  const customer_id = customerSel.value;
+
+  addMessage(message, "user");
+  input.value = "";
+
+  try{
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ customer_id, message })
+    });
+    const data = await res.json();
+    addMemoryStrip(data.recalled_memories || []);
+    addMessage(data.reply, "agent");
+  } catch(err){
+    addMessage("Error reaching the server — make sure app.py is running.", "agent");
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+flask
+python-dotenv
+hindsight-client
+openai
