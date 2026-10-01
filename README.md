@@ -68,3 +68,10 @@ Better privacy and data handling
 Built as a project to explore AI agents, conversation memory, and customer support automation using Python and HTML.
 
 The idea is simple: don't make the customer start over every time.
+
+🚀 Meet the Team Behind the Agent
+* Hala Fazil.
+* Sakina Mirza
+* Sarah Begum
+* Soha Mohammed
+* Syeda Azra Fatima
